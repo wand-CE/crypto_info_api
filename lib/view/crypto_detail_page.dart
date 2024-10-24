@@ -1,16 +1,23 @@
+import 'package:crypto_info_api/viewModel/crypto_controller.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../viewModel/number_format.dart';
 
 class CryptoDetailPage extends StatelessWidget {
-  const CryptoDetailPage({super.key});
+  CryptoDetailPage({super.key});
+
+  final CryptoController _cryptoController = Get.find();
 
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormatter();
 
     final cryptoName = Get.arguments['cryptoName'];
+
+    _cryptoController.getChart(cryptoName);
+
     final cryptoImage = Get.arguments['cryptoImage'];
     final cryptoPrice = Get.arguments['cryptoPrice'];
     final cryptoSymbol = Get.arguments['cryptoSymbol'];
@@ -44,6 +51,44 @@ class CryptoDetailPage extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
+            ),
+            Obx(
+              () => _cryptoController.isLoadingChart.value
+                  ? CircularProgressIndicator()
+                  : _cryptoController.chartData.isEmpty
+                      ? Text('Nenhum dado disponível.')
+                      : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: LineChart(
+                            LineChartData(
+                              gridData: FlGridData(show: true),
+                              titlesData: FlTitlesData(show: true),
+                              borderData: FlBorderData(show: true),
+                              minX: 0,
+                              maxX: _cryptoController.chartData.length
+                                      .toDouble() -
+                                  1,
+                              minY: _cryptoController.chartData
+                                      .map((spot) => spot.y)
+                                      .reduce((a, b) => a < b ? a : b) *
+                                  0.9,
+                              maxY: _cryptoController.chartData
+                                      .map((spot) => spot.y)
+                                      .reduce((a, b) => a > b ? a : b) *
+                                  1.1,
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: _cryptoController.chartData,
+                                  isCurved: true,
+                                  color: Colors.blue,
+                                  barWidth: 2,
+                                  isStrokeCapRound: true,
+                                  belowBarData: BarAreaData(show: false),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
             ),
             SizedBox(height: 24),
             Text(
